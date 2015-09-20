@@ -1,0 +1,10 @@
+{
+  "tracer":{
+    "settings":{
+      "logName":"tracer.log",
+      "logPath":"",
+      "logLevel":9,
+      "maxFileSize":20480
+    }
+  }
+}
