@@ -34,19 +34,19 @@
 
 |url                        |方式|描述                 |备注|
 | ------------------------- |:-------:| ------------------ | -------- |
-|/paper/create              |POST|*创建问卷*            |无  |
+|/paper/create              |POST|_创建问卷_            |无  |
 |/paper/info/{pid}          |POST|获取问卷内容          |无  |
 |/paper/update/{pid}        |POST|更新问卷内容          |无  |
 |/paper/delete/{pid}        |POST|删除问卷             |无  |
 |/paper/list/{uid}          |POST|列出某人创建的所有问卷 |无  |
 |/paper/list/{oid}          |POST|列出组织创建的所有问卷 |无  |
-|/paper/result/{pid}        |POST|*显示该问卷结果*      |无  |
+|/paper/result/{pid}        |POST|_显示该问卷结果_      |无  |
 
-## *微信用户*
+## 微信用户
 
 |url                        |方式|描述                 |备注|
 | ------------------------- |:--------:| ------------------ | -------- |
 |/client/create             |POST|登记该微信用户        |无  |
-|/client/info/{cid}         |POST|*获取该微信用户信息*   |无  |
+|/client/info/{cid}         |POST|_获取该微信用户信息_   |无  |
 |/client/update/{cid}       |POST|人工更新微信用户信息   |无  |
 |/client/delete/{cid}       |POST|人工删除微信用户      |无  |
