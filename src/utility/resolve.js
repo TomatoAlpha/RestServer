@@ -95,13 +95,52 @@ exports.parseAjax = function (req, format, callback) {
 
 exports.paperUnpackageAndParse = function(filepath, picFolder, callback) {
   var self = this;
-  winrar.unpackage(filepath, picFolder, function(paper, picList){
-    console.log(paper);
-    self.paperParse(picList, callback);
+  winrar.unpackage(filepath, picFolder, function(paper, mediaList){
+    self.paperParse(paper, mediaList, callback);
   });
 }
 
-exports.paperParse = function(paperData, callback) {
+exports.paperParse = function(paper, mediaList, callback) {
+  var self = this;
+  paper.data = paper.data.split('\r\n\r\n');
+  self.questionParse(paper.data[1], mediaList);
+  callback(mediaList);
+}
 
-  callback(paperData);
+exports.questionParse = function(textData, mediaList, callback){
+  var question = {};
+  try {
+
+    if(!textData) throw 'Question content is null.';
+    textData = textData.split('\r\n');
+
+    question['order'] = +textData[0].match(/\d\.\b/)[0].replace('.', '');
+    if( isNaN(question['order']) ) throw 'Question order is not correct.';
+
+    question['content'] = textData[0].replace(textData[0].match(/\d\.\b/)[0], '').replace(/\]$/, '').split(/\]\[|\[/g);
+    for (var i = 0; i < question['content'].length; i++) {
+      switch (question['content'][i].trim()) {
+        case '单选题':
+
+          break;
+        case '多选题':
+
+          break;
+        case '问答题':
+
+        default: break;
+      }
+    }
+    question['content'] = { 'text': question['content'], 'url': ''};
+
+    for (var i = 1; i < textData.length; i++) {
+      textData[i] = textData[i].trim();
+      if(i == 0){
+      }
+    }
+  } catch (e) {
+    var error = 'Question data parse failed, detial: ' + e.message;
+    tracer.error(error);
+    callback(error, null);
+  }
 }

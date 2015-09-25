@@ -11,6 +11,7 @@ var CheckSchema = new Schema({
 });
 
 var QuestionSchema = new Schema({
+    order         : { type: Number,    default: 0     },
     type          : { type: Number,    default: 1     },
     checks        : [ CheckSchema                     ],
     groupSwitcher : { type: Boolean,   default: false },

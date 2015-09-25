@@ -18,7 +18,6 @@ exports.verbose = function (logString) {
     if(this.logLevel > this.levelInfo){
       logString = '[Verbose]' + new Date(Date.now()).toISOString() + ':' + logString + '\r\n';
       logStream.write(logString);
-      // console.log(this.Info.caller);
     }
   } catch (e) {
     console.log(e);
@@ -30,7 +29,6 @@ exports.info = function (logString) {
     if(this.logLevel > this.levelInfo){
       logString = '[Info]' + new Date(Date.now()).toISOString() + ':' + logString + '\r\n';
       logStream.write(logString);
-      // console.log(this.Info.caller);
     }
   } catch (e) {
     console.log(e);
@@ -52,6 +50,7 @@ exports.error = function (logString) {
   try {
     if(this.logLevel > this.levelError){
       logString = '[Error]' + new Date(Date.now()).toISOString() + ':' + logString + '\r\n';
+      console.log(logString);
       logStream.write(logString);
     }
   } catch (e) {
