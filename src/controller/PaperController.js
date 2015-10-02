@@ -33,12 +33,29 @@ exports.create = function (req, callback) {
           resolve.paperUnpackageAndParse(files.file.path, config.PicServer, function(paperData){
             // 完成问卷解压和解析后删除文件
             fs.unlink(files.file.path);
-            // 回调返回问卷数据
-            callback(null, paperData);
+            // 保存数据
+            paperData.data['uid'] = adapter['account']['_id'];
+            paperData.data['oid'] = adapter['orgnization']['_id'];
+            paperData.data['createTime'] = new Date();
+            var question = paperData.data['question'];
+            paperData.data['question'] = [];
+            for (var i = 0; i < question.length; i++) {
+              var questions = new QuestionModel(question[i]);
+              questions.save(function(err, questionResult, numberAffected){
+                paperData.data['question'].push(questionResult['_id']);
+                if (paperData.data['question'].length == question.length - 1) {
+                  var paper = new PaperModel(paperData.data);
+                  paper.save(function(err, paperResult, numberAffected){
+                    callback(null, paperResult);
+                  });
+                }
+              });
+            }
           });
         } else {
           // 如果验证adaper验证出错，删除问卷数据
           fs.unlink(files.file.path);
+          callback('Create paper error, detial:' + err, null);
         }
       });
     });
@@ -48,3 +65,85 @@ exports.create = function (req, callback) {
     callback(err, paperData);
   }
 }
+
+/**
+ *  如果向http://localhost:3000/paper/question/{token}发起创建问卷请求
+ *  请求登录
+ */
+ exports.view = function (req, callback) {
+   var paperData = null, err, self = this;
+   try {
+     resolve.parseAjax(req, 'json', function(data){
+       // 自定义查询adapter，用于查询orgnization和account同时匹配结果
+       var adapter = new Controller.Adaper('orgnization account');
+       // 将uid和token转成_id和token
+       adapter['account'] = resolve.modifyKey(resolve.selectKey(data, 'uid token'), '_id token');
+       adapter['orgnization'] = resolve.modifyKey(resolve.selectKey(data, 'oid'), '_id');
+       // 利用adaper来验证account和orgnization
+       adapter.query(function(err, result){
+         if(result) {
+           self.query({uid:data['uid'], oid:data['oid'], _id: req.params.pid}, function(err, result){
+             if (result) {
+               var questionList = [];
+               for (var i = 0; i < result['question'].length; i++) {
+                 QuestionModel.findOne({_id: result['question'][i]}, function(err, question){
+                  questionList.push(question);
+                   if (questionList.length == result['question'].length - 1) {
+                     result = result.toObject();
+                     result['question'] = questionList;
+                     callback(err, result);
+                   }
+                 });
+               }
+             } else {
+               callback('List paper error, detial: No paper.', null);
+             }
+           });
+         } else {
+           callback('List paper error, detial: Cannot pass the auth.', null);
+         }
+       });
+     });
+   } catch (e) {
+     err = e;
+     tracer.error('List paper error, detial:' + err);
+     callback(err);
+   }
+ }
+
+exports.query = function (data, callback) {
+  PaperModel.findOne(data, callback);
+}
+
+exports.search = function (data, callback) {
+  PaperModel.find(data, callback);
+}
+
+ /**
+  *  如果向http://localhost:3000/paper/question/{token}发起创建问卷请求
+  *  请求登录
+  */
+  exports.list = function (req, callback) {
+    var paperData = null, err, self = this;
+    try {
+      // 自定义查询adapter，用于查询orgnization和account同时匹配结果
+      var adapter = new Controller.Adaper('orgnization account');
+      // 将uid和token转成_id和token
+      adapter['account'] = resolve.modifyKey(resolve.selectKey(req.body, 'uid token'), '_id token');
+      adapter['orgnization'] = resolve.modifyKey(resolve.selectKey(req.body, 'oid'), '_id');
+      // 利用adaper来验证account和orgnization
+      adapter.query(function(err, result){
+        if(result) {
+          self.search({uid:req.body['uid'], oid:req.body['oid']}, function(err, result){
+            callback(err, result);
+          });
+        } else {
+          callback('List paper error, detial: Cannot pass the auth.', null);
+        }
+      });
+    } catch (e) {
+      err = e;
+      tracer.error('List paper error, detial:' + err);
+      callback(err);
+    }
+  }

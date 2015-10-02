@@ -14,5 +14,25 @@ router.post('/create', function(req, res, next) {
   });
 });
 
+/**
+ *  如果向http://localhost:3000/account/login发起post请求
+ *  请求登录
+ */
+router.post('/view/:pid', function(req, res, next) {
+  PaperController.view(req, function(err, result){
+    res.json(result);
+  });
+});
+
+/**
+ *  如果向http://localhost:3000/account/login发起post请求
+ *  请求登录
+ */
+router.post('/list', function(req, res, next) {
+  PaperController.list(req, function(err, result){
+    res.json(result);
+  });
+});
+
 
 module.exports = router;

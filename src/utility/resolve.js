@@ -1,7 +1,7 @@
 var crypto = require('crypto');
 var tracer = require('./tracer');
 var winrar = require('./helperWinrar');
-var adaper = require('./paperParser');
+var define = require('./questionDefine');
 /***
  *  Select Key form object
  **/
@@ -101,46 +101,102 @@ exports.paperUnpackageAndParse = function(filepath, picFolder, callback) {
 }
 
 exports.paperParse = function(paper, mediaList, callback) {
-  var self = this;
-  paper.data = paper.data.split('\r\n\r\n');
-  self.questionParse(paper.data[1], mediaList);
-  callback(mediaList);
+  try {
+    var self = this, paperCache = paper.data.split('\r\n\r\n');
+    paper.data = {};
+    paper.data['title'] = paperCache[0];
+    paper.data['error'] = [];
+    paper.data['question'] = [];
+    for (var i = 1; i < paperCache.length; i++) {
+      var data = self.questionParse(paperCache[i], mediaList);
+      if (!data['error']) {
+        paper.data['question'].push( data.result );
+      } else {
+        paper.data['error'].push( data.error );
+        tracer.warn('Parse paper which name is"' + paper.data['title'] + '" has something invailed, detial: ' + data.error);
+      }
+    }
+    callback(paper);
+  } catch (e) {
+    tracer.error('Paper parse has something error, detial: ' + e.message);
+    callback({ error: 'Paper parse has something error, detial: ' + e.message, data: null });
+  }
 }
 
-exports.questionParse = function(textData, mediaList, callback){
-  var question = {};
+exports.questionParse = function(textData, mediaList){
   try {
+    var question = { 'checks': []}, self = this;
 
     if(!textData) throw 'Question content is null.';
-    textData = textData.split('\r\n');
+    textData = textData.replace(/^\s+|\s+$/, '').split('\r\n');
 
-    question['order'] = +textData[0].match(/\d\.\b/)[0].replace('.', '');
+    question['order'] = +textData[0].match(/\d\./)[0].replace('.', '');
     if( isNaN(question['order']) ) throw 'Question order is not correct.';
 
-    question['content'] = textData[0].replace(textData[0].match(/\d\.\b/)[0], '').replace(/\]$/, '').split(/\]\[|\[/g);
-    for (var i = 0; i < question['content'].length; i++) {
-      switch (question['content'][i].trim()) {
+    questionText = textData[0].replace(question['order'] + '.', '').replace(/\]$/, '').split(/\]\[|\[/g);
+    question['content'] = { 'text': questionText[0] };
+    for (var i = 0; i < questionText.length; i++) {
+      var attribute = questionText[i].trim().split(':')[0];
+      var value = questionText[i].trim().split(':')[1];
+      switch (attribute) {
+        case '图片': case '视频':
+          question['content']['url'] = self.selectMediaUrl(value, mediaList);
+          if(!question['content']['url']) tracer.warn('Select Media Url invailed, detial: Cannot find the media named "' + value + '".');
+          break;
+        case '分组':
+          question['isGroup'] = true;
+          question['group'] = value;
+          break;
         case '单选题':
-
+          question['type'] = 1;
           break;
         case '多选题':
-
+          question['type'] = 2;
+          question['minMult'] = value.split('/')[0];
+          question['maxMult'] = value.split('/')[1];
           break;
         case '问答题':
-
+          question['type'] = 3;
         default: break;
       }
     }
-    question['content'] = { 'text': question['content'], 'url': ''};
 
     for (var i = 1; i < textData.length; i++) {
-      textData[i] = textData[i].trim();
-      if(i == 0){
-      }
+      var check = {};
+      check['order'] = textData[i].trim().match(/\D\./)[0].replace('.', '').trim();
+      checkText = textData[i].replace(check['order'] + '.', '').replace(/\]$/, '').split(/\]\[|\[/g);
+      check['content'] = { 'text': checkText[0].trim() };
+      checkText.forEach(function(key){
+        var attribute = key.trim().split(':')[0];
+        var value = key.trim().split(':')[1];
+        switch (attribute) {
+          case '图片': case '视频':
+            check['content']['url'] = self.selectMediaUrl(value, mediaList);
+            break;
+          default:
+            break;
+        }
+      });
+      question['checks'].push(check);
     }
+    return { error: null, result: question };
   } catch (e) {
     var error = 'Question data parse failed, detial: ' + e.message;
-    tracer.error(error);
-    callback(error, null);
+    // tracer.error(error);
+    return { error: error, result: null };
   }
 }
+
+exports.selectMediaUrl = function(mediaName, mediaList){
+  try {
+    for (var i = 0; i < mediaList.length; i++) {
+      if (mediaList[i].fullName == mediaName) {
+        return mediaList[i].url;
+      }
+    }
+    throw 'Cannot find the media named "' + mediaName + '"';
+  } catch (e) {
+    console.log('Select Media Url failed, detial: ' + e.toString());
+    return null;
+  }
+};

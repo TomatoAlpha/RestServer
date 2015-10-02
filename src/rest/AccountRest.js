@@ -2,24 +2,35 @@ var express = require('express');
 var router = express.Router();
 var resolve = require('../utility/resolve');
 var AccountController = require('../controller/AccountController.js');
-
+var ObjectSet = require('../utility/objectSet').ObjectSet;
 /**
  *  如果向http://localhost:3000/account/login发起post请求
  *  请求登录
  */
 router.post('/login', function(req, res, next) {
-  // 解析req.body，提取username和password
-  var data = resolve.selectKey(req.body, 'username password');
-  // 如果解析失败，发回前端空数据
-  if (data == null) { res.json(null); return; }
-  // 查找登录account的username和password是否正确
-  AccountController.query(data, function(err, result){
-    // 找到用户登录成功返回用户数据，找不到则返回空
-    if (result != null)
-      res.json(resolve.selectKey(result, '_id token'));
-    else
-      res.json(null);
-  });
+
+  try {
+    // 解析req.body，提取username和password
+    var data = new ObjectSet(req.body).selectKey('username password').data;
+    if (!data) throw 'Usrename and password resolve failed.';  // 如果解析失败，报错
+
+    AccountController.query(data, function(err, result){  // 查找登录account的username和password是否正确
+      if (result) {
+        var resData = new ObjectSet(result).selectKey('_id token').modifyKey('uid token').data;
+        res.json(resData); // 找到用户登录成功返回用户数据，返回uid和token
+      } else {
+        if (!err) {
+          // throw 'Usrename and password is not correct.';  // 用户验证失败，报错
+          res.json({ 'err': 'Usrename and password is not correct.'});  // 用户验证失败，报错
+        } else {
+          // throw err.toString(); // 查询失败，内部错误
+          res.json({ 'err': err.toString()});  // 用户验证失败，报错
+        }
+      }
+    });
+  } catch (e) {
+    res.json({ 'err': 'User login failed, detial:' + e });
+  }
 });
 
 /**
@@ -28,14 +39,16 @@ router.post('/login', function(req, res, next) {
  */
 router.post('/regist', function(req, res, next) {
   // 解析req.body，提取username password email mobile
-  var data = resolve.selectKey(req.body, 'username password email mobile');
+  var data = new ObjectSet(req.body).selectKey('username password email mobile').data;
   // 如果解析失败，发回前端空数据
   if (data == null) { res.json(null); return; }
   // 创建account
   AccountController.createUser(data, function(err, product, numberAffected){
     // 创建没有错误，返回数据
-    if (product != null)
-      res.json(resolve.selectKey(product, '_id token'));
+    if (product != null) {
+      var resData = new ObjectSet(product).selectKey('_id token').modifyKey('uid token').data;
+      res.json(resData);
+    }
     else
       res.json(null);
   });

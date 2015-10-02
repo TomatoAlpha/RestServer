@@ -1,5 +1,6 @@
 var AccountController = require('./AccountController');
 var OrgnizationController = require('./OrgnizationController');
+var PaperController = require('./PaperController');
 var tracer = require('../utility/tracer');
 /**
  *  如果向http://localhost:3000/paper/create发起创建问卷请求
@@ -17,6 +18,7 @@ function Adaper (controllersName) {
       case 'industry':
         break;
       case 'paper':
+        self.controllers[controller] = PaperController;
         break;
       case 'account':
         self.controllers[controller] = AccountController;
