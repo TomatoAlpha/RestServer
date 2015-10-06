@@ -29,6 +29,8 @@ exports.update = function (executor, update, callback) {
         update = resolve.deleteKey(update.update, '_id token username createTime orgnization password');
         var options = { new : true };
         AccountModel.findOneAndUpdate(updateAccount, update, options, callback);
+      } else {
+        callback('Account update failed, detial: Don\'t have authority.', null);
       }
     } else {
       callback(null, null);
