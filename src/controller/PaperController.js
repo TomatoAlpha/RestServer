@@ -128,20 +128,22 @@ exports.search = function (data, callback) {
 exports.list = function (req, callback) {
   var err, self = this;
   try {
-    // 自定义查询adapter，用于查询orgnization和account同时匹配结果
-    var adapter = new Controller.Adaper('orgnization account');
-    // 将uid和token转成_id和token
-    adapter['account'] = new ObjectSet(req.body).selectKey('uid token').modifyKey('_id token').data;
-    adapter['orgnization'] = new ObjectSet(req.body).selectKey('oid').modifyKey('_id').data;
-    // 利用adaper来验证account和orgnization
-    adapter.query(function(err, result){
-      if(result) {
-        self.search({uid:req.body['uid'], oid:req.body['oid']}, function(err, result){
-          callback(err, result);
-        });
-      } else {
-        callback('List paper error, detial: Cannot pass the auth.', null);
-      }
+    resolve.parseAjax(req, 'json', function(data){
+      // 自定义查询adapter，用于查询orgnization和account同时匹配结果
+      var adapter = new Controller.Adaper('orgnization account');
+      // 将uid和token转成_id和token
+      adapter['account'] = new ObjectSet(data).selectKey('uid token').modifyKey('_id token').data;
+      adapter['orgnization'] = new ObjectSet(data).selectKey('oid').modifyKey('_id').data;
+      // 利用adaper来验证account和orgnization
+      adapter.query(function(err, result){
+        if(result) {
+          self.search({uid:data['uid'], oid:data['oid']}, function(err, result){
+            callback(err, result);
+          });
+        } else {
+          callback('List paper error, detial: Cannot pass the auth.', null);
+        }
+      });
     });
   } catch (e) {
     err = e;
