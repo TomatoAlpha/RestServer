@@ -26,8 +26,8 @@ exports.create = function (req, callback) {
       // 自定义查询adapter，用于查询orgnization和account同时匹配结果
       var adapter = new Controller.Adaper('orgnization account');
       // 将uid和token转成_id和token
-      adapter['account'] = resolve.modifyKey(resolve.selectKey(fields, 'uid token'), '_id token');
-      adapter['orgnization'] = resolve.modifyKey(resolve.selectKey(fields, 'oid'), '_id');
+      adapter['account'] = new ObjectSet(fields).selectKey('uid token').modifyKey('_id token').data;
+      adapter['orgnization'] = new ObjectSet(fields).selectKey('oid').modifyKey('_id').data;
       // 利用adaper来验证account和orgnization
       adapter.query(function(err, result){
         if(result) {
@@ -79,8 +79,8 @@ exports.create = function (req, callback) {
        // 自定义查询adapter，用于查询orgnization和account同时匹配结果
        var adapter = new Controller.Adaper('orgnization account');
        // 将uid和token转成_id和token
-       adapter['account'] = resolve.modifyKey(resolve.selectKey(data, 'uid token'), '_id token');
-       adapter['orgnization'] = resolve.modifyKey(resolve.selectKey(data, 'oid'), '_id');
+       adapter['account'] = new ObjectSet(data).selectKey('uid token').modifyKey('_id token').data;
+       adapter['orgnization'] = new ObjectSet(data).selectKey('oid').modifyKey('_id').data;
        // 利用adaper来验证account和orgnization
        adapter.query(function(err, result){
          if(result) {
@@ -131,8 +131,8 @@ exports.list = function (req, callback) {
     // 自定义查询adapter，用于查询orgnization和account同时匹配结果
     var adapter = new Controller.Adaper('orgnization account');
     // 将uid和token转成_id和token
-    adapter['account'] = resolve.modifyKey(resolve.selectKey(req.body, 'uid token'), '_id token');
-    adapter['orgnization'] = resolve.modifyKey(resolve.selectKey(req.body, 'oid'), '_id');
+    adapter['account'] = new ObjectSet(req.body).selectKey('uid token').modifyKey('_id token').data;
+    adapter['orgnization'] = new ObjectSet(req.body).selectKey('oid').modifyKey('_id').data;
     // 利用adaper来验证account和orgnization
     adapter.query(function(err, result){
       if(result) {
@@ -211,26 +211,6 @@ exports.doPaper = function (req, callback) {
         });
       }
     });
-
-
-    // self.query({_id: req.params.pid}, function(err, result){
-    //   if (result) {
-    //     var questionList = [];
-    //     for (var i = 0; i < result['question'].length; i++) {
-    //       QuestionModel.findOne({_id: result['question'][i]}, function(err, question){
-    //        questionList.push(question);
-    //         if (questionList.length == result['question'].length - 1) {
-    //           result = result.toObject();
-    //           result['question'] = questionList;
-    //           result = new ObjectSet(result).selectKey('title question').data;
-    //           callback(err, result);
-    //         }
-    //       });
-    //     }
-    //   } else {
-    //     callback('Get paper content error, detial: No paper.', null);
-    //   }
-    // });
   } catch (e) {
     err = e;
     tracer.error('Get paper content error, detial:' + err);
