@@ -7,5 +7,6 @@ module.exports = {
 	orgnization:	mongoose.model('orgnization', require('./schemas/orgnization')),
 	paper:				mongoose.model('paper', require('./schemas/paper')),
 	question:			mongoose.model('question', require('./schemas/question')),
-	client:				mongoose.model('client', require('./schemas/client'))
+	client:				mongoose.model('client', require('./schemas/client')),
+	result:				mongoose.model('result', require('./schemas/result'))
 }

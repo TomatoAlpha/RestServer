@@ -34,5 +34,28 @@ router.post('/list', function(req, res, next) {
   });
 });
 
+/**
+ *  如果向http://localhost:3000/account/login发起post请求
+ *  请求登录
+ */
+router.get('/:pid', function(req, res, next) {
+  PaperController.getPaperContent(req, function(err, result){
+    res.json(result);
+  });
+});
+
+/**
+ *  如果向http://localhost:3000/account/login发起post请求
+ *  请求登录
+ */
+router.post('/', function(req, res, next) {
+  PaperController.doPaper(req, function(err, result){
+    if (err) {
+      res.json(err);
+    } else {
+      res.json(result);
+    }
+  });
+});
 
 module.exports = router;

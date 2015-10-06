@@ -2,10 +2,12 @@ var fs = require('fs');
 var formidable = require('formidable');
 var PaperModel = require('./models/models').paper;
 var QuestionModel = require('./models/models').question;
+var ResultModel = require('./models/models').result;
 var config = require('../../config');
 var resolve = require('../utility/resolve');
 var tracer = require('../utility/tracer');
 var Controller = require('./controller');
+var ObjectSet = require('../utility/objectSet').ObjectSet;
 
 /**
  *  如果向http://localhost:3000/paper/create发起创建问卷请求
@@ -71,7 +73,7 @@ exports.create = function (req, callback) {
  *  请求登录
  */
  exports.view = function (req, callback) {
-   var paperData = null, err, self = this;
+   var err, self = this;
    try {
      resolve.parseAjax(req, 'json', function(data){
        // 自定义查询adapter，用于查询orgnization和account同时匹配结果
@@ -96,17 +98,17 @@ exports.create = function (req, callback) {
                  });
                }
              } else {
-               callback('List paper error, detial: No paper.', null);
+               callback('View paper error, detial: No paper.', null);
              }
            });
          } else {
-           callback('List paper error, detial: Cannot pass the auth.', null);
+           callback('View paper error, detial: Cannot pass the auth.', null);
          }
        });
      });
    } catch (e) {
      err = e;
-     tracer.error('List paper error, detial:' + err);
+     tracer.error('View paper error, detial:' + err);
      callback(err);
    }
  }
@@ -119,31 +121,119 @@ exports.search = function (data, callback) {
   PaperModel.find(data, callback);
 }
 
- /**
+/**
   *  如果向http://localhost:3000/paper/question/{token}发起创建问卷请求
   *  请求登录
   */
-  exports.list = function (req, callback) {
-    var paperData = null, err, self = this;
-    try {
-      // 自定义查询adapter，用于查询orgnization和account同时匹配结果
-      var adapter = new Controller.Adaper('orgnization account');
-      // 将uid和token转成_id和token
-      adapter['account'] = resolve.modifyKey(resolve.selectKey(req.body, 'uid token'), '_id token');
-      adapter['orgnization'] = resolve.modifyKey(resolve.selectKey(req.body, 'oid'), '_id');
-      // 利用adaper来验证account和orgnization
-      adapter.query(function(err, result){
-        if(result) {
-          self.search({uid:req.body['uid'], oid:req.body['oid']}, function(err, result){
-            callback(err, result);
-          });
-        } else {
-          callback('List paper error, detial: Cannot pass the auth.', null);
-        }
-      });
-    } catch (e) {
-      err = e;
-      tracer.error('List paper error, detial:' + err);
-      callback(err);
-    }
+exports.list = function (req, callback) {
+  var err, self = this;
+  try {
+    // 自定义查询adapter，用于查询orgnization和account同时匹配结果
+    var adapter = new Controller.Adaper('orgnization account');
+    // 将uid和token转成_id和token
+    adapter['account'] = resolve.modifyKey(resolve.selectKey(req.body, 'uid token'), '_id token');
+    adapter['orgnization'] = resolve.modifyKey(resolve.selectKey(req.body, 'oid'), '_id');
+    // 利用adaper来验证account和orgnization
+    adapter.query(function(err, result){
+      if(result) {
+        self.search({uid:req.body['uid'], oid:req.body['oid']}, function(err, result){
+          callback(err, result);
+        });
+      } else {
+        callback('List paper error, detial: Cannot pass the auth.', null);
+      }
+    });
+  } catch (e) {
+    err = e;
+    tracer.error('List paper error, detial:' + err);
+    callback(err);
   }
+}
+
+/**
+  *  如果向http://localhost:3000/paper/question/{token}发起创建问卷请求
+  *  请求登录
+  */
+exports.getPaperContent = function (req, callback) {
+  var err, self = this;
+  try {
+    self.query({_id: req.params.pid}, function(err, result){
+      if (result) {
+        var questionList = [];
+        for (var i = 0; i < result['question'].length; i++) {
+          QuestionModel.findOne({_id: result['question'][i]}, function(err, question){
+           questionList.push(question);
+            if (questionList.length == result['question'].length - 1) {
+              result = result.toObject();
+              result['question'] = questionList;
+              result = new ObjectSet(result).selectKey('title question').data;
+              callback(err, result);
+            }
+          });
+        }
+      } else {
+        callback('Get paper content error, detial: No paper.', null);
+      }
+    });
+  } catch (e) {
+    err = e;
+    tracer.error('Get paper content error, detial:' + err);
+    callback(err);
+  }
+}
+
+/**
+  *  如果向http://localhost:3000/paper/question/{token}发起创建问卷请求
+  *  请求登录
+  */
+exports.doPaper = function (req, callback) {
+  var err, self = this;
+  try {
+    resolve.parseAjax(req, 'json', function(data){
+      if (!data){
+        callback('Do paper error, detial: Submit data invailed.', null);
+      } else {
+        var resultTicket = new ObjectSet(data).selectKey('cid qid').data;
+        var update = new ObjectSet(data).selectKey('cid qid answer timeTickes date').data;
+        QuestionModel.findOne( { _id: resultTicket['qid'] }, function(err, question){
+          if (question) {
+            var result = new ResultModel(update);
+            result.save(function(err, result){
+              if (result) {
+                callback(null, result);
+              } else {
+                callback('Save the result failed, detial: ' + err, null);
+              }
+            });
+          } else {
+            callback('Do paper error, detial: Cannot find the paper.', null);
+          }
+        });
+      }
+    });
+
+
+    // self.query({_id: req.params.pid}, function(err, result){
+    //   if (result) {
+    //     var questionList = [];
+    //     for (var i = 0; i < result['question'].length; i++) {
+    //       QuestionModel.findOne({_id: result['question'][i]}, function(err, question){
+    //        questionList.push(question);
+    //         if (questionList.length == result['question'].length - 1) {
+    //           result = result.toObject();
+    //           result['question'] = questionList;
+    //           result = new ObjectSet(result).selectKey('title question').data;
+    //           callback(err, result);
+    //         }
+    //       });
+    //     }
+    //   } else {
+    //     callback('Get paper content error, detial: No paper.', null);
+    //   }
+    // });
+  } catch (e) {
+    err = e;
+    tracer.error('Get paper content error, detial:' + err);
+    callback(err);
+  }
+}
