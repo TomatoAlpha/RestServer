@@ -1,6 +1,6 @@
 # RestServer API v1.0 一览表
 
-## [用户账号](https://github.com/TomatoAlpha/RestServer/blob/master/Doc/account.md)
+## [用户账号](https://github.com/TomatoAlpha/RestServer/blob/Demo-v1.0/Doc/v1.0/account.md)
 
 |url                        |方式   |描述              |备注      |
 | ------------------------- |:-----:| --------------- | ------  |
@@ -9,7 +9,7 @@
 |/account/update            |POST   |更新某用户信息     |无       |
 |/account/check             |POST   |查询用户名是否存在 |无       |
 
-## [调查问卷](https://github.com/TomatoAlpha/RestServer/blob/master/Doc/paper.md)
+## [调查问卷](https://github.com/TomatoAlpha/RestServer/blob/Demo-v1.0/Doc/v1.0/paper.md)
 
 |url                        |方式|描述                 |备注|
 | ------------------------- |:-------:| ------------------ | -------- |
