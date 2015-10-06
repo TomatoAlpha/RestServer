@@ -46,6 +46,25 @@ Response{
 }
 ```
 
+### 查询用户信息：
+
+|项目                        |值   |
+| ------------------------- |:-----:|
+|url|http://182.254.241.122:3000/account/info|
+|递交方式|Ajax - POST|
+|内容|uid token|
+
+```
+Requset{
+  uid: "56133b45549a05440ee09cda",
+  token: "Llnq+X7w4K+ocmf+7Cy2hw=="
+}
+
+Response{
+  user information...
+}
+```
+
 ### 校验用户名：
 
 |项目                        |值   |

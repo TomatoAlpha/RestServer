@@ -6,6 +6,7 @@
 | ------------------------- |:-----:| --------------- | ------  |
 |/account/login             |POST   |用户登录          |无       |
 |/account/regist            |POST   |用户注册          |无       |
+|/account/info              |POST   |用户信息          |无       |
 |/account/update            |POST   |更新某用户信息     |无       |
 |/account/check             |POST   |查询用户名是否存在 |无       |
 
