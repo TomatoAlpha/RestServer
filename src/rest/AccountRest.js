@@ -94,4 +94,25 @@ router.post('/update', function(req, res, next) {
   });
 });
 
+/**
+ *  如果向http://localhost:3000/account/update发起post请求
+ *  请求查询
+ */
+router.post('/info', function(req, res, next) {
+  resolve.parseAjax(req, 'json', function(data){
+    // 解析req.body，提取executor的_id token
+    var ticket = new ObjectSet(data).selectKey('uid token').modifyKey('_id token').data;
+    // 如果解析失败，发回前端空数据
+    if (!ticket) { res.json(null); return; }
+    // 验证身份，然后更新account基本信息
+    AccountController.query(ticket, function(err, result){
+      if(result != null){
+        res.json(result);
+      } else {
+        res.json(null);
+      }
+    });
+  });
+});
+
 module.exports = router;
